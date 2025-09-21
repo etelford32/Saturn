@@ -1,0 +1,112 @@
+saturn-simulation/
+├── index.html
+├── package.json
+├── README.md
+├── src/
+│   ├── main.js                    # Application entry point
+│   ├── core/
+│   │   ├── Engine.js              # Main simulation engine
+│   │   ├── Scene.js               # Three.js scene setup
+│   │   ├── Renderer.js            # WebGL renderer configuration
+│   │   └── Time.js                # Time management and delta time
+│   │
+│   ├── celestial/
+│   │   ├── PlanetaryBody.js       # Base class for all celestial objects
+│   │   ├── Planet.js              # Planet-specific implementation
+│   │   ├── PlanetCore.js          # Planet core physics and properties
+│   │   ├── PlanetAtmosphere.js    # Atmospheric simulation
+│   │   ├── PlanetRings.js         # Ring system implementation
+│   │   ├── RingParticle.js        # Individual ring particle behavior
+│   │   ├── Moon.js                # Moon class with properties
+│   │   └── MoonSystem.js          # Moon collection manager
+│   │
+│   ├── physics/
+│   │   ├── OrbitalMechanics.js    # Kepler's laws, orbital calculations
+│   │   ├── RigidBody.js           # Rigid body physics implementation
+│   │   ├── GravityField.js        # Gravitational field calculations
+│   │   ├── Magnetosphere.js       # Magnetic field simulation
+│   │   ├── CoriolisEffect.js      # Coriolis force calculations
+│   │   └── TidalForces.js         # Tidal effects between bodies
+│   │
+│   ├── atmosphere/
+│   │   ├── AtmosphericDynamics.js # Wind patterns, jet streams
+│   │   ├── TemperatureGradient.js # Temperature distribution
+│   │   ├── StormSystem.js         # Storm generation and movement
+│   │   ├── CloudLayer.js          # Cloud rendering and dynamics
+│   │   └── AuroraEffect.js        # Aurora borealis/australis
+│   │
+│   ├── camera/
+│   │   ├── CameraController.js    # Main camera control system
+│   │   ├── CameraStates.js        # Different camera modes/states
+│   │   ├── CameraAnimation.js     # Smooth camera transitions
+│   │   └── ViewPresets.js         # Predefined camera positions
+│   │
+│   ├── ui/
+│   │   ├── UIManager.js           # Central UI controller
+│   │   ├── MobileUI.js            # Mobile-specific interface
+│   │   ├── DesktopUI.js           # Desktop interface layout
+│   │   ├── ResearchPanel.js       # Scientific data display
+│   │   ├── ControlPanel.js        # Simulation controls
+│   │   ├── InfoDisplay.js         # Real-time statistics
+│   │   ├── Timeline.js            # Time control interface
+│   │   └── NotificationSystem.js  # User notifications/alerts
+│   │
+│   ├── graphics/
+│   │   ├── Shaders.js             # Custom GLSL shaders
+│   │   ├── Materials.js           # Material definitions
+│   │   ├── Textures.js            # Texture loading and management
+│   │   ├── ParticleSystem.js      # Particle effects manager
+│   │   ├── PostProcessing.js      # Post-processing effects
+│   │   └── LOD.js                 # Level of detail system
+│   │
+│   ├── data/
+│   │   ├── SaturnData.js          # Saturn physical properties
+│   │   ├── MoonData.js            # Moon orbital and physical data
+│   │   ├── RingData.js            # Ring system parameters
+│   │   └── Constants.js           # Physical constants (G, c, etc.)
+│   │
+│   ├── utils/
+│   │   ├── MathUtils.js           # Vector math, quaternions
+│   │   ├── ColorUtils.js          # Color manipulation
+│   │   ├── LoadingManager.js      # Asset loading management
+│   │   ├── PerformanceMonitor.js  # FPS and performance tracking
+│   │   └── LocalStorage.js        # Save/load simulation state
+│   │
+│   └── config/
+│       ├── SimulationConfig.js    # Simulation parameters
+│       ├── GraphicsConfig.js      # Graphics quality settings
+│       └── UIConfig.js            # UI layout configuration
+│
+├── assets/
+│   ├── textures/
+│   │   ├── saturn/
+│   │   │   ├── surface.jpg
+│   │   │   ├── normal.jpg
+│   │   │   └── clouds.png
+│   │   ├── moons/
+│   │   │   ├── titan.jpg
+│   │   │   ├── enceladus.jpg
+│   │   │   └── ...
+│   │   └── environment/
+│   │       ├── stars.jpg
+│   │       └── milkyway.jpg
+│   │
+│   ├── models/
+│   │   └── spacecraft/           # Optional spacecraft models
+│   │
+│   └── shaders/
+│       ├── atmosphere.vert
+│       ├── atmosphere.frag
+│       ├── rings.vert
+│       └── rings.frag
+│
+├── styles/
+│   ├── main.css
+│   ├── ui.css
+│   └── mobile.css
+│
+└── tests/
+    ├── physics/
+    │   └── orbital.test.js
+    └── utils/
+        └── math.test.js
