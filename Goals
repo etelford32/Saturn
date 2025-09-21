@@ -1,0 +1,224 @@
+Saturn Simulation — Physics Goals & Object Model
+
+Target: production‑quality, scientifically grounded, GPU‑accelerated web simulation for Atomik and engineering portfolio.
+
+0) Success Criteria (Portfolio & Product)
+
+Interactive @ 60 FPS on M1/M2 laptops and modern phones (fallback to 30 FPS) with ≥ 2K ring particles.
+
+Quantitative fidelity: ring resonance radii, moon ephemerides, and basic atmospheric banding within 1–5% of reference values (configurable presets).
+
+Modular API so each subsystem (atmosphere, rings, gravity, magnetosphere) runs independently and can be unit-tested and showcased.
+
+Deterministic replays given a seed and config.
+
+Scientific panels (ResearchPanel) output live diagnostics & comparisons to literature baselines.
+
+1) Project Goals by Subsystem
+
+A) Gravitational Environment & Orbital Mechanics
+
+Goals
+
+High‑precision N‑body integration for Saturn + major moons (Titans set + shepherds) with configurable superparticle rings.
+
+Include oblateness (J2, J4) to capture precession and resonance structure.
+
+Support external perturbers (Jupiter/Sun) as optional forcing terms.
+
+Deliverables
+
+physics/OrbitalIntegrators.js (new): symplectic leapfrog & 4/5 RK with adaptive Δt.
+
+physics/GravityHarmonics.js (new): zonal harmonics J2, J4 acceleration terms.
+
+data/MoonEphemeris.json (new): sampled SPICE/JPL ephemerides downsampled for web.
+
+celestial/MoonSystem.js (extend): multi‑moon couplings, resonance tagging (e.g., 2:1, 7:6, etc.).
+
+Validation Targets
+
+Resonance locations (e.g., Encke/Keeler gaps, Mimas 2:1) within 1–2%.
+
+Titan orbital period & semi‑major axis within 0.5%.
+
+B) Rings: Structure & Evolution (Superparticles)
+
+Goals
+
+Real‑time superparticle model with inelastic collisions + velocity dispersion + self‑gravity wakes (approximate via local patch gravity & granular damping).
+
+Shepherd‑moon interactions (Pan, Daphnis, Prometheus/Atlas) and gap maintenance.
+
+Optical depth rendering (transmission/phase) with physically informed shader.
+
+Deliverables
+
+celestial/PlanetRings.js (extend): ring bins (A/B/C, Cassini Division) with distributions of a,e,i, σ (surface density), τ (optical depth).
+
+celestial/RingParticle.js (extend): collider (cell‑list spatial hash), stochastic restitution (e).
+
+physics/RingCollisions.js (new): cell‑based pairwise impulses; granular temperature.
+
+physics/RingSelfGravity.js (new): local 2D Poisson patch solver or Barnes–Hut on GPU (config tiered).
+
+graphics/shaders/rings.frag (extend): multiple‑scattering approximation (Schuster–Schwarzschild style) for brightness vs. phase angle.
+
+Validation Targets
+
+Cassini Division width ±5%.
+
+Wake wavelengths scale with Toomre Q ~ 2 (qualitative mode).
+
+C) Atmospheric Dynamics & Coriolis Effects
+
+Goals
+
+Shallow‑water (SW) or 2‑layer SW solver on the sphere with β‑plane option; reproduce zonal jets & high‑latitude hexagon‑like standing wave.
+
+Coriolis: f = 2Ω sinφ, plus spherical metric terms.
+
+Forcing: simple radiative relaxation (Newtonian cooling), stochastic eddy forcing for jet maintenance; optional moist tracer for storms.
+
+Deliverables
+
+atmosphere/PrimitiveCore.js (new): SW prognostics (h, u, v) with semi‑Lagrangian advection option.
+
+physics/CoriolisEffect.js (extend): provides f(φ), metric factors, and curvilinear operators.
+
+atmosphere/TemperatureGradient.js (extend): Newtonian relaxation to latitudinal Teq(φ).
+
+atmosphere/StormSystem.js (extend): vortex seeding + PV inversion for jet interaction.
+
+graphics/shaders/clouds.frag (extend): maps (u, v, h) to cloud bands & storms.
+
+Validation Targets
+
+~10–20 alternating jets; equatorial superrotation visual match (qualitative) in High tier.
+
+Stable polygonal wave at ~78°N (hexagon‑like) in Ultra tier (phase‑locked standing wave in SW solver).
+
+D) Magnetosphere & Aurora
+
+Goals
+
+Tilted rotating dipole + optional quadrupole term; solar‑wind compression model for bow shock and magnetopause.
+
+Field‑line tracing for auroral emission mapping; corotation enforced inside Alfvén radius.
+
+Deliverables
+
+physics/Magnetosphere.js (refactor): Dipole + higher harmonics; pressure balance model for magnetopause standoff distance.
+
+graphics/shaders/aurora.frag (extend): field‑aligned emission bands (UV/visible mapping) modulated by solar wind input.
+
+data/MagnetoConfig.json (new): B0, tilt, rotation rate, SW parameters.
+
+Validation Targets
+
+Magnetopause dayside standoff within literature range for selected solar‑wind presets.
+
+Aurora colatitude bands consistent with dipole L‑shell mapping (qualitative).
+
+2) Architecture & Object Model (Additions/Extensions)
+
+Core Numerics & Time
+
+core/Time.js: add multi‑rate stepping (rings at Δt_r, atmosphere at Δt_a, orbits at Δt_o) with sub‑stepping and state interpolation.
+
+core/Engine.js: subsystem scheduler; deterministic random seeds per frame.
+
+Data & Units
+
+data/Constants.js: adopt SI; document base units; add Ω_Saturn, R_eq, J2, J4.
+
+data/SaturnData.js: add oblateness parameters and reference rotation frames.
+
+data/RingData.js: per‑ring (A/B/C) σ( r ), τ( r ), particle radius distribution.
+
+data/MoonData.js: mass, radius, GM, ring interactions flags.
+
+Physics Interfaces (Type Signatures)
+
+// orbital
+integrate(dt: number): void
+getState(): {x:vec3, v:vec3, m:number}
+applyPerturber(name:string, accelFn:(state)=>vec3): void
+
+// rings
+stepRings(dt: number, mode:"CPU"|"GPU"): void
+setShepherds(moons: Moon[]): void
+getOpticalDepthProfile(): Float32Array
+
+// atmosphere
+stepAtmosphere(dt: number): void
+setForcing(params:{Teq: (lat)=>number, tau_rad:number}): void
+injectVortex(lat:number, lon:number, amp:number, radius:number): void
+
+// magnetosphere
+updateMagnetosphere(dt:number, sw:{rho:number, v:number, B:number}): void
+traceFieldLine(start:vec3, steps:number): vec3[]
+
+ECS‑Style Data Flow (within your current structure)
+
+State Stores: SaturnState, RingsState, AtmosState, MagState (plain objects/arrays).
+
+Systems: OrbitalSystem, RingSystem, AtmosSystem, MagnetoSystem.
+
+Render Passes: Planet pass → Clouds → Rings → Aurora → Post.
+
+3) Numerics & Performance Plan
+
+Integrators
+
+Orbits: Kick‑Drift‑Kick leapfrog (symplectic). Fallback: Dormand–Prince 5(4) for sanity checks.
+
+Atmosphere: semi‑Lagrangian advection + Arakawa C‑grid finite differences; Robert–Asselin filter.
+
+Rings: cell‑list neighbor search; impulse collisions; optional Barnes–Hut θ=0.6 for self‑gravity (GPU via transform feedback / compute).
+
+Stability
+
+Courant number C≤0.7 for atmosphere; collision sub‑steps for rings when relative speeds high.
+
+Energy drift monitors per subsystem; assert bounds every N frames.
+
+LOD / Presets
+
+Low: 5k ring superparticles, no self‑gravity, 1‑layer SW, dipole only.
+
+High: 50k superparticles, local self‑gravity, 2‑layer SW, dipole+quadrupole.
+
+Ultra: 200k superparticles (GPU), BH self‑gravity, hexagon wave model, external perturbers on.
+
+4) Testing & Validation
+
+Unit Tests (tests/)
+
+physics/orbital.test.js: two‑body, energy error < 1e‑5/orbit; resonance tagging unit cases.
+
+physics/gravityHarmonics.test.js: precession rates vs. analytic.
+
+physics/ringCollisions.test.js: momentum conservation within 0.1% per step.
+
+atmosphere/shallowwater.test.js: geostrophic balance & Rossby wave phase speed vs. theory.
+
+physics/magnetosphere.test.js: standoff distance vs. pressure balance equation.
+
+Scenario Tests
+
+Shepherd Gap: Pan maintains Encke gap over T=10k steps (gap width steady ±10%).
+
+Hexagon: forced jet with β‑plane supports m=6 stationary wave.
+
+Resonance Sweep: vary moon a, detect gap opening at predicted commensurabilities.
+
+ResearchPanel Metrics
+
+Orbits: a,e,i, resonances.
+
+Rings: τ(r), granular temperature, collision rate, wake scale.
+
+Atmos: jet speeds, PV maps, Rossby number, C.
+
+Magneto: standoff R_mp, dipole tilt, L‑shell traces.
