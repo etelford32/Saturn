@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Interactive 3D Saturn System Simulation with realistic physics, moons, and ring dynamics">
+    <meta name="keywords" content="Saturn, simulation, 3D, space, astronomy, physics">
+    <meta name="author" content="Saturn Simulation Project">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#000011">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <title>Saturn System Simulation</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/ui.css">
+    <link rel="stylesheet" href="styles/mobile.css">
+    
+    <!-- Preconnect to CDNs for better performance -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <svg width="100" height="100" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" stroke="#FFD700" stroke-width="2" fill="none" opacity="0.2"/>
+                    <circle cx="50" cy="50" r="45" stroke="#FFD700" stroke-width="2" fill="none" 
+                            stroke-dasharray="220" stroke-dashoffset="220" class="loading-ring">
+                        <animate attributeName="stroke-dashoffset" values="220;0" dur="2s" repeatCount="indefinite"/>
+                    </circle>
+                    <circle cx="50" cy="50" r="15" fill="#FAD5A5"/>
+                </svg>
+            </div>
+            <h1 class="loading-title">Saturn System</h1>
+            <div class="loading-status">Initializing simulation...</div>
+            <div class="loading-progress">
+                <div class="loading-progress-bar"></div>
+            </div>
+            <div class="loading-details"></div>
+        </div>
+    </div>
+
+    <!-- Main Canvas -->
+    <canvas id="canvas" class="simulation-canvas"></canvas>
+
+    <!-- UI Container -->
+    <div id="ui-root" class="ui-root">
+        
+        <!-- Top Bar -->
+        <header id="top-bar" class="top-bar">
+            <div class="app-title">
+                <span class="saturn-icon">🪐</span>
+                <h1>Saturn System Simulation</h1>
+            </div>
+            <div class="top-controls">
+                <button id="fullscreen-btn" class="icon-btn" title="Fullscreen">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M3 5V3h2V1H1v4h2zm14 0V3h-2V1h4v4h-2zM5 17v-2H3v2H1v2h4v-2zm12 0v-2h2v-2h2v4h-4z"/>
+                    </svg>
+                </button>
+                <button id="settings-btn" class="icon-btn" title="Settings">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                        <path fill-rule="evenodd" d="M10 1.6a.8.8 0 01.8.8v1.4a.8.8 0 01-.8.8.8.8 0 01-.8-.8V2.4a.8.8 0 01.8-.8zm0 14.8a.8.8 0 01.8.8v1.4a.8.8 0 01-.8.8.8.8 0 01-.8-.8v-1.4a.8.8 0 01.8-.8zM18.4 10a.8.8 0 01-.8.8h-1.4a.8.8 0 010-1.6h1.4a.8.8 0 01.8.8zM4.6 10a.8.8 0 01-.8.8H2.4a.8.8 0 010-1.6h1.4a.8.8 0 01.8.8z"/>
+                    </svg>
+                </button>
+                <button id="help-btn" class="icon-btn" title="Help">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Control Panel (Left) -->
+        <aside id="control-panel" class="panel control-panel">
+            <div class="panel-header">
+                <h2>Controls</h2>
+                <button class="panel-toggle" aria-label="Toggle panel">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M9.5 13a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0-5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0-5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="panel-content">
+                <!-- Time Controls -->
+                <section class="control-section">
+                    <h3>Time Controls</h3>
+                    <div class="control-group">
+                        <label for="time-speed">Simulation Speed</label>
+                        <div class="slider-container">
+                            <input type="range" id="time-speed" min="0" max="1000" value="1" step="0.1">
+                            <span class="slider-value">1.0x</span>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button id="play-pause-btn" class="control-btn">
+                            <span class="btn-icon">⏸️</span>
+                            <span class="btn-text">Pause</span>
+                        </button>
+                        <button id="reset-btn" class="control-btn">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-text">Reset</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Display Options -->
+                <section class="control-section">
+                    <h3>Display Options</h3>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-rings" checked>
+                            <span>Rings</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-moons" checked>
+                            <span>Moons</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-atmosphere" checked>
+                            <span>Atmosphere</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-magnetosphere">
+                            <span>Magnetosphere</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-orbits">
+                            <span>Orbital Paths</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-labels" checked>
+                            <span>Labels</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-grid">
+                            <span>Reference Grid</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-stats">
+                            <span>Statistics</span>
+                        </label>
+                    </div>
+                </section>
+
+                <!-- Camera Presets -->
+                <section class="control-section">
+                    <h3>Camera Views</h3>
+                    <div class="button-grid">
+                        <button class="view-btn" data-view="overview">Overview</button>
+                        <button class="view-btn" data-view="top">Top View</button>
+                        <button class="view-btn" data-view="side">Side View</button>
+                        <button class="view-btn" data-view="rings">Ring Focus</button>
+                        <button class="view-btn" data-view="titan">Titan</button>
+                        <button class="view-btn" data-view="enceladus">Enceladus</button>
+                    </div>
+                </section>
+
+                <!-- Graphics Quality -->
+                <section class="control-section">
+                    <h3>Graphics Quality</h3>
+                    <select id="quality-select" class="control-select">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                        <option value="ultra">Ultra</option>
+                    </select>
+                </section>
+            </div>
+        </aside>
+
+        <!-- Info Panel (Right) -->
+        <aside id="info-panel" class="panel info-panel">
+            <div class="panel-header">
+                <h2>Information</h2>
+                <button class="panel-toggle" aria-label="Toggle panel">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M9.5 13a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0-5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0-5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="panel-content">
+                <!-- System Statistics -->
+                <section class="info-section">
+                    <h3>System Statistics</h3>
+                    <div class="stat-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">Simulation Time</span>
+                            <span class="stat-value" id="sim-time">0.00 days</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Saturn Day</span>
+                            <span class="stat-value" id="saturn-day">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Rotation Period</span>
+                            <span class="stat-value">10.7 hours</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Active Moons</span>
+                            <span class="stat-value" id="active-moons">8/83</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Saturn Properties -->
+                <section class="info-section">
+                    <h3>Saturn Properties</h3>
+                    <div class="property-list">
+                        <div class="property-item">
+                            <span class="property-label">Mass</span>
+                            <span class="property-value">5.683 × 10²⁶ kg</span>
+                        </div>
+                        <div class="property-item">
+                            <span class="property-label">Radius</span>
+                            <span class="property-value">58,232 km</span>
+                        </div>
+                        <div class="property-item">
+                            <span class="property-label">Temperature</span>
+                            <span class="property-value" id="temperature">-178°C</span>
+                        </div>
+                        <div class="property-item">
+                            <span class="property-label">Magnetic Field</span>
+                            <span class="property-value">0.21 Gauss</span>
+                        </div>
+                        <div class="property-item">
+                            <span class="property-label">Wind Speed</span>
+                            <span class="property-value" id="wind-speed">1,800 km/h</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Selected Object -->
+                <section class="info-section" id="selected-object-section" style="display: none;">
+                    <h3>Selected: <span id="selected-name">--</span></h3>
+                    <div class="property-list" id="selected-properties">
+                        <!-- Dynamically populated -->
+                    </div>
+                </section>
+            </div>
+        </aside>
+
+        <!-- Research Panel (Bottom) -->
+        <aside id="research-panel" class="panel research-panel">
+            <div class="panel-header">
+                <h2>Research Data</h2>
+                <div class="research-tabs">
+                    <button class="tab-btn active" data-tab="overview">Overview</button>
+                    <button class="tab-btn" data-tab="rings">Rings</button>
+                    <button class="tab-btn" data-tab="moons">Moons</button>
+                    <button class="tab-btn" data-tab="atmosphere">Atmosphere</button>
+                    <button class="tab-btn" data-tab="magnetosphere">Magnetosphere</button>
+                </div>
+                <button class="panel-toggle" aria-label="Toggle panel">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M9.5 13a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0-5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0-5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="panel-content">
+                <div class="research-content" id="research-content">
+                    <!-- Content dynamically loaded based on selected tab -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Timeline Control (Bottom) -->
+        <div id="timeline-control" class="timeline-control">
+            <div class="timeline-container">
+                <button class="timeline-btn" id="timeline-play">▶</button>
+                <div class="timeline-track">
+                    <div class="timeline-progress"></div>
+                    <input type="range" class="timeline-scrubber" min="0" max="100" value="0">
+                </div>
+                <span class="timeline-display">Day 0.00</span>
+            </div>
+        </div>
+
+        <!-- Performance Monitor -->
+        <div id="performance-monitor" class="performance-monitor" style="display: none;">
+            <div class="monitor-item">
+                <span class="monitor-label">FPS:</span>
+                <span class="monitor-value" id="fps-value">60</span>
+            </div>
+            <div class="monitor-item">
+                <span class="monitor-label">MS:</span>
+                <span class="monitor-value" id="ms-value">16</span>
+            </div>
+            <div class="monitor-item">
+                <span class="monitor-label">MB:</span>
+                <span class="monitor-value" id="mb-value">0</span>
+            </div>
+            <div class="monitor-item">
+                <span class="monitor-label">Particles:</span>
+                <span class="monitor-value" id="particle-count">0</span>
+            </div>
+        </div>
+
+        <!-- Context Menu -->
+        <div id="context-menu" class="context-menu" style="display: none;">
+            <ul class="context-menu-list">
+                <li class="context-menu-item" data-action="focus">Focus</li>
+                <li class="context-menu-item" data-action="track">Track</li>
+                <li class="context-menu-item" data-action="info">Show Information</li>
+                <li class="context-menu-item" data-action="hide">Hide</li>
+            </ul>
+        </div>
+
+        <!-- Notification Container -->
+        <div id="notification-container" class="notification-container"></div>
+
+        <!-- Modal Container -->
+        <div id="modal-container" class="modal-container" style="display: none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2 class="modal-title"></h2>
+                    <button class="modal-close">×</button>
+                </div>
+                <div class="modal-content"></div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Toggle -->
+        <button id="mobile-menu-toggle" class="mobile-menu-toggle">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Import map for ES modules -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/+esm",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+            "stats.js": "https://cdn.jsdelivr.net/npm/stats-js@1.0.1/build/stats.module.js"
+        }
+    }
+    </script>
+    
+    <!-- Main application entry point -->
+    <script type="module" src="src/main.js"></script>
+    
+    <!-- Initialize non-module scripts -->
+    <script>
+        // Check WebGL support
+        if (!window.WebGLRenderingContext) {
+            document.getElementById('loading-status').textContent = 'WebGL is not supported in your browser';
+            document.getElementById('loading-details').textContent = 'Please use a modern browser with WebGL support';
+        }
+        
+        // Set initial theme based on system preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+        
+        // Prevent context menu on canvas
+        document.getElementById('canvas').addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+    </script>
+</body>
+</html>
