@@ -2,377 +2,1395 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Interactive 3D Saturn System Simulation with realistic physics, moons, and ring dynamics">
-    <meta name="keywords" content="Saturn, simulation, 3D, space, astronomy, physics">
-    <meta name="author" content="Saturn Simulation Project">
-    
-    <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#000011">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-    <title>Saturn System Simulation</title>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-    
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="styles/main.css">
-    <link rel="stylesheet" href="styles/ui.css">
-    <link rel="stylesheet" href="styles/mobile.css">
-    
-    <!-- Preconnect to CDNs for better performance -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saturn System Simulation - 40+ Moons</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #container {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .ui-panel {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            color: white;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            user-select: none;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .panel-controls button {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 18px;
+            cursor: pointer;
+            margin-left: 8px;
+            padding: 0 4px;
+        }
+
+        .panel-controls button:hover {
+            color: white;
+        }
+
+        .panel-content {
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 24px;
+            pointer-events: none;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: #d1d5db;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .toggle-buttons {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .toggle-btn {
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn:hover {
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .control-group {
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .control-group h4 {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #3b82f6, #8b5cf6);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(to right, #2563eb, #7c3aed);
+        }
+
+        .slider-group {
+            margin-bottom: 12px;
+        }
+
+        .slider-label {
+            font-size: 11px;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .checkbox-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        input[type="checkbox"] {
+            cursor: pointer;
+        }
+
+        .moon-btn {
+            width: 100%;
+            text-align: left;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            margin-bottom: 4px;
+            transition: all 0.2s;
+            font-size: 11px;
+        }
+
+        .moon-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .moon-btn.selected {
+            background: #f97316;
+        }
+
+        .moon-btn.shepherd.selected {
+            background: #3b82f6;
+        }
+
+        .moon-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        .moon-desc {
+            font-size: 9px;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+
+        .moon-distance {
+            font-size: 9px;
+            color: #6b7280;
+        }
+
+        .info-section {
+            margin-bottom: 12px;
+            font-size: 11px;
+        }
+
+        .info-section strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .orbit-legend {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+            margin-left: 8px;
+        }
+
+        .orbit-line {
+            width: 32px;
+            height: 2px;
+        }
+
+        .orbit-line.blue { background: #60a5fa; }
+        .orbit-line.gray { background: #9ca3af; }
+        .orbit-line.pink { background: #f472b6; }
+
+        .resize-handle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 16px;
+            height: 16px;
+            cursor: nwse-resize;
+            background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.3) 50%);
+        }
+
+        .section-header {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .blue-text { color: #93c5fd; }
+        .pink-text { color: #f9a8d4; }
+        .orange-text { color: #fdba74; }
+
+        /* Moon label overlay */
+        .moon-label {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            pointer-events: none;
+            font-size: 12px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            transition: opacity 0.2s;
+            white-space: nowrap;
+        }
+
+        .moon-label.pinned {
+            pointer-events: auto;
+            border-color: #3b82f6;
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .moon-label-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+            font-size: 13px;
+        }
+
+        .moon-label-info {
+            font-size: 10px;
+            color: #9ca3af;
+        }
+
+        .moon-label-pin {
+            display: inline-block;
+            margin-left: 8px;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        .moon-label-pin:hover {
+            opacity: 1;
+        }
+
+        .moon-label.pinned .moon-label-pin {
+            opacity: 1;
+        }
+
+        .close-label {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 4px;
+            line-height: 1;
+        }
+
+        .close-label:hover {
+            color: white;
+        }
+    </style>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div id="loading-screen" class="loading-screen">
-        <div class="loading-content">
-            <div class="loading-spinner">
-                <svg width="100" height="100" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" stroke="#FFD700" stroke-width="2" fill="none" opacity="0.2"/>
-                    <circle cx="50" cy="50" r="45" stroke="#FFD700" stroke-width="2" fill="none" 
-                            stroke-dasharray="220" stroke-dashoffset="220" class="loading-ring">
-                        <animate attributeName="stroke-dashoffset" values="220;0" dur="2s" repeatCount="indefinite"/>
-                    </circle>
-                    <circle cx="50" cy="50" r="15" fill="#FAD5A5"/>
-                </svg>
-            </div>
-            <h1 class="loading-title">Saturn System</h1>
-            <div class="loading-status">Initializing simulation...</div>
-            <div class="loading-progress">
-                <div class="loading-progress-bar"></div>
-            </div>
-            <div class="loading-details"></div>
-        </div>
+    <div id="container"></div>
+    
+    <div class="header">
+        <h1>Saturn System Simulation</h1>
+        <p id="stats">40+ moons • Hexagonal storm • 50,000 ring particles • Time: 0d 0h</p>
     </div>
 
-    <!-- Main Canvas -->
-    <canvas id="canvas" class="simulation-canvas"></canvas>
-
-    <!-- UI Container -->
-    <div id="ui-root" class="ui-root">
-        
-        <!-- Top Bar -->
-        <header id="top-bar" class="top-bar">
-            <div class="app-title">
-                <span class="saturn-icon">🪐</span>
-                <h1>Saturn System Simulation</h1>
-            </div>
-            <div class="top-controls">
-                <button id="fullscreen-btn" class="icon-btn" title="Fullscreen">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M3 5V3h2V1H1v4h2zm14 0V3h-2V1h4v4h-2zM5 17v-2H3v2H1v2h4v-2zm12 0v-2h2v-2h2v4h-4z"/>
-                    </svg>
-                </button>
-                <button id="settings-btn" class="icon-btn" title="Settings">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
-                        <path fill-rule="evenodd" d="M10 1.6a.8.8 0 01.8.8v1.4a.8.8 0 01-.8.8.8.8 0 01-.8-.8V2.4a.8.8 0 01.8-.8zm0 14.8a.8.8 0 01.8.8v1.4a.8.8 0 01-.8.8.8.8 0 01-.8-.8v-1.4a.8.8 0 01.8-.8zM18.4 10a.8.8 0 01-.8.8h-1.4a.8.8 0 010-1.6h1.4a.8.8 0 01.8.8zM4.6 10a.8.8 0 01-.8.8H2.4a.8.8 0 010-1.6h1.4a.8.8 0 01.8.8z"/>
-                    </svg>
-                </button>
-                <button id="help-btn" class="icon-btn" title="Help">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"/>
-                    </svg>
-                </button>
-            </div>
-        </header>
-
-        <!-- Control Panel (Left) -->
-        <aside id="control-panel" class="panel control-panel">
-            <div class="panel-header">
-                <h2>Controls</h2>
-                <button class="panel-toggle" aria-label="Toggle panel">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M9.5 13a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0-5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0-5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
-                    </svg>
-                </button>
-            </div>
-            <div class="panel-content">
-                <!-- Time Controls -->
-                <section class="control-section">
-                    <h3>Time Controls</h3>
-                    <div class="control-group">
-                        <label for="time-speed">Simulation Speed</label>
-                        <div class="slider-container">
-                            <input type="range" id="time-speed" min="0" max="1000" value="1" step="0.1">
-                            <span class="slider-value">1.0x</span>
-                        </div>
-                    </div>
-                    <div class="button-group">
-                        <button id="play-pause-btn" class="control-btn">
-                            <span class="btn-icon">⏸️</span>
-                            <span class="btn-text">Pause</span>
-                        </button>
-                        <button id="reset-btn" class="control-btn">
-                            <span class="btn-icon">🔄</span>
-                            <span class="btn-text">Reset</span>
-                        </button>
-                    </div>
-                </section>
-
-                <!-- Display Options -->
-                <section class="control-section">
-                    <h3>Display Options</h3>
-                    <div class="checkbox-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="show-rings" checked>
-                            <span>Rings</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="show-moons" checked>
-                            <span>Moons</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="show-atmosphere" checked>
-                            <span>Atmosphere</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="show-magnetosphere">
-                            <span>Magnetosphere</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="show-orbits">
-                            <span>Orbital Paths</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="show-labels" checked>
-                            <span>Labels</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="show-grid">
-                            <span>Reference Grid</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="show-stats">
-                            <span>Statistics</span>
-                        </label>
-                    </div>
-                </section>
-
-                <!-- Camera Presets -->
-                <section class="control-section">
-                    <h3>Camera Views</h3>
-                    <div class="button-grid">
-                        <button class="view-btn" data-view="overview">Overview</button>
-                        <button class="view-btn" data-view="top">Top View</button>
-                        <button class="view-btn" data-view="side">Side View</button>
-                        <button class="view-btn" data-view="rings">Ring Focus</button>
-                        <button class="view-btn" data-view="titan">Titan</button>
-                        <button class="view-btn" data-view="enceladus">Enceladus</button>
-                    </div>
-                </section>
-
-                <!-- Graphics Quality -->
-                <section class="control-section">
-                    <h3>Graphics Quality</h3>
-                    <select id="quality-select" class="control-select">
-                        <option value="low">Low</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="high">High</option>
-                        <option value="ultra">Ultra</option>
-                    </select>
-                </section>
-            </div>
-        </aside>
-
-        <!-- Info Panel (Right) -->
-        <aside id="info-panel" class="panel info-panel">
-            <div class="panel-header">
-                <h2>Information</h2>
-                <button class="panel-toggle" aria-label="Toggle panel">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M9.5 13a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0-5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0-5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
-                    </svg>
-                </button>
-            </div>
-            <div class="panel-content">
-                <!-- System Statistics -->
-                <section class="info-section">
-                    <h3>System Statistics</h3>
-                    <div class="stat-grid">
-                        <div class="stat-item">
-                            <span class="stat-label">Simulation Time</span>
-                            <span class="stat-value" id="sim-time">0.00 days</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Saturn Day</span>
-                            <span class="stat-value" id="saturn-day">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Rotation Period</span>
-                            <span class="stat-value">10.7 hours</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Active Moons</span>
-                            <span class="stat-value" id="active-moons">8/83</span>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Saturn Properties -->
-                <section class="info-section">
-                    <h3>Saturn Properties</h3>
-                    <div class="property-list">
-                        <div class="property-item">
-                            <span class="property-label">Mass</span>
-                            <span class="property-value">5.683 × 10²⁶ kg</span>
-                        </div>
-                        <div class="property-item">
-                            <span class="property-label">Radius</span>
-                            <span class="property-value">58,232 km</span>
-                        </div>
-                        <div class="property-item">
-                            <span class="property-label">Temperature</span>
-                            <span class="property-value" id="temperature">-178°C</span>
-                        </div>
-                        <div class="property-item">
-                            <span class="property-label">Magnetic Field</span>
-                            <span class="property-value">0.21 Gauss</span>
-                        </div>
-                        <div class="property-item">
-                            <span class="property-label">Wind Speed</span>
-                            <span class="property-value" id="wind-speed">1,800 km/h</span>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Selected Object -->
-                <section class="info-section" id="selected-object-section" style="display: none;">
-                    <h3>Selected: <span id="selected-name">--</span></h3>
-                    <div class="property-list" id="selected-properties">
-                        <!-- Dynamically populated -->
-                    </div>
-                </section>
-            </div>
-        </aside>
-
-        <!-- Research Panel (Bottom) -->
-        <aside id="research-panel" class="panel research-panel">
-            <div class="panel-header">
-                <h2>Research Data</h2>
-                <div class="research-tabs">
-                    <button class="tab-btn active" data-tab="overview">Overview</button>
-                    <button class="tab-btn" data-tab="rings">Rings</button>
-                    <button class="tab-btn" data-tab="moons">Moons</button>
-                    <button class="tab-btn" data-tab="atmosphere">Atmosphere</button>
-                    <button class="tab-btn" data-tab="magnetosphere">Magnetosphere</button>
-                </div>
-                <button class="panel-toggle" aria-label="Toggle panel">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M9.5 13a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0-5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0-5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
-                    </svg>
-                </button>
-            </div>
-            <div class="panel-content">
-                <div class="research-content" id="research-content">
-                    <!-- Content dynamically loaded based on selected tab -->
-                </div>
-            </div>
-        </aside>
-
-        <!-- Timeline Control (Bottom) -->
-        <div id="timeline-control" class="timeline-control">
-            <div class="timeline-container">
-                <button class="timeline-btn" id="timeline-play">▶</button>
-                <div class="timeline-track">
-                    <div class="timeline-progress"></div>
-                    <input type="range" class="timeline-scrubber" min="0" max="100" value="0">
-                </div>
-                <span class="timeline-display">Day 0.00</span>
-            </div>
-        </div>
-
-        <!-- Performance Monitor -->
-        <div id="performance-monitor" class="performance-monitor" style="display: none;">
-            <div class="monitor-item">
-                <span class="monitor-label">FPS:</span>
-                <span class="monitor-value" id="fps-value">60</span>
-            </div>
-            <div class="monitor-item">
-                <span class="monitor-label">MS:</span>
-                <span class="monitor-value" id="ms-value">16</span>
-            </div>
-            <div class="monitor-item">
-                <span class="monitor-label">MB:</span>
-                <span class="monitor-value" id="mb-value">0</span>
-            </div>
-            <div class="monitor-item">
-                <span class="monitor-label">Particles:</span>
-                <span class="monitor-value" id="particle-count">0</span>
-            </div>
-        </div>
-
-        <!-- Context Menu -->
-        <div id="context-menu" class="context-menu" style="display: none;">
-            <ul class="context-menu-list">
-                <li class="context-menu-item" data-action="focus">Focus</li>
-                <li class="context-menu-item" data-action="track">Track</li>
-                <li class="context-menu-item" data-action="info">Show Information</li>
-                <li class="context-menu-item" data-action="hide">Hide</li>
-            </ul>
-        </div>
-
-        <!-- Notification Container -->
-        <div id="notification-container" class="notification-container"></div>
-
-        <!-- Modal Container -->
-        <div id="modal-container" class="modal-container" style="display: none;">
-            <div class="modal">
-                <div class="modal-header">
-                    <h2 class="modal-title"></h2>
-                    <button class="modal-close">×</button>
-                </div>
-                <div class="modal-content"></div>
-            </div>
-        </div>
-
-        <!-- Mobile Menu Toggle -->
-        <button id="mobile-menu-toggle" class="mobile-menu-toggle">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-        </button>
+    <div class="toggle-buttons">
+        <button class="toggle-btn" onclick="togglePanel('controls')">⚙️</button>
+        <button class="toggle-btn" onclick="togglePanel('info')">ℹ️</button>
+        <button class="toggle-btn" onclick="togglePanel('moons')">🌙</button>
     </div>
 
-    <!-- Scripts -->
-    <!-- Import map for ES modules -->
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/+esm",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
-            "stats.js": "https://cdn.jsdelivr.net/npm/stats-js@1.0.1/build/stats.module.js"
-        }
-    }
-    </script>
-    
-    <!-- Main application entry point -->
-    <script type="module" src="src/main.js"></script>
-    
-    <!-- Initialize non-module scripts -->
+    <div id="controls-panel" class="ui-panel" style="right: 24px; top: 100px; width: 340px; height: 680px;">
+        <div class="panel-header">
+            <span class="panel-title">Time & Display Controls</span>
+            <div class="panel-controls">
+                <button onclick="toggleCollapse('controls')">−</button>
+                <button onclick="togglePanel('controls')">×</button>
+            </div>
+        </div>
+        <div class="panel-content" id="controls-content">
+            <div class="control-group">
+                <h4>Time Controls</h4>
+                <div class="control-row">
+                    <button class="btn" style="flex: 1;" onclick="adjustSpeed(-0.5)">◀◀</button>
+                    <button class="btn btn-primary" style="flex: 1;" onclick="togglePause()">
+                        <span id="pause-btn">⏸</span>
+                    </button>
+                    <button class="btn" style="flex: 1;" onclick="adjustSpeed(0.5)">▶▶</button>
+                </div>
+                <div class="slider-group">
+                    <label class="slider-label">Speed: <span id="speed-value">1.0</span>x</label>
+                    <input type="range" id="speed-slider" min="-5" max="10" step="0.5" value="1">
+                </div>
+                <button class="btn" style="width: 100%;" onclick="resetTime()">Reset Time</button>
+            </div>
+
+            <div class="control-group">
+                <h4>Display Options</h4>
+                <div class="checkbox-group">
+                    <span>Show Rings</span>
+                    <input type="checkbox" id="show-rings" checked>
+                </div>
+                <div class="checkbox-group">
+                    <span>Show Atmosphere</span>
+                    <input type="checkbox" id="show-atmosphere" checked>
+                </div>
+                <div class="checkbox-group">
+                    <span class="orange-text">Hexagonal Storm</span>
+                    <input type="checkbox" id="show-hexagon" checked>
+                </div>
+                <div class="checkbox-group">
+                    <span class="blue-text">Shepherd Moons (16)</span>
+                    <input type="checkbox" id="show-shepherd" checked>
+                </div>
+                <div class="checkbox-group">
+                    <span>Major Moons (8)</span>
+                    <input type="checkbox" id="show-major" checked>
+                </div>
+                <div class="checkbox-group">
+                    <span>Minor Moons (8)</span>
+                    <input type="checkbox" id="show-minor" checked>
+                </div>
+                <div class="checkbox-group">
+                    <span class="pink-text">Irregular Moons (10)</span>
+                    <input type="checkbox" id="show-irregular">
+                </div>
+                <div class="checkbox-group">
+                    <span>Show Orbits</span>
+                    <input type="checkbox" id="show-orbits" checked>
+                </div>
+                <div class="checkbox-group">
+                    <span>Show Labels on Hover</span>
+                    <input type="checkbox" id="show-labels" checked>
+                </div>
+            </div>
+
+            <div class="slider-group">
+                <label class="slider-label">Ring Particles: <span id="particles-value">50,000</span></label>
+                <input type="range" id="particles-slider" min="10000" max="100000" step="10000" value="50000">
+                <p style="font-size: 10px; color: #9ca3af; margin-top: 4px;">Higher values may impact performance</p>
+            </div>
+        </div>
+        <div class="resize-handle"></div>
+    </div>
+
+    <div id="info-panel" class="ui-panel" style="left: 24px; bottom: 24px; width: 380px; height: 440px;">
+        <div class="panel-header">
+            <span class="panel-title">Saturn System Info</span>
+            <div class="panel-controls">
+                <button onclick="toggleCollapse('info')">−</button>
+                <button onclick="togglePanel('info')">×</button>
+            </div>
+        </div>
+        <div class="panel-content" id="info-content">
+            <div class="info-section" style="border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px; margin-bottom: 12px;">
+                <strong class="blue-text">System Properties</strong>
+                <div style="font-size: 10px; color: #9ca3af; margin-top: 4px;">
+                    Axial Tilt: 26.73° • Rings: ~282,000 km wide • 40+ Moons
+                </div>
+            </div>
+
+            <div class="info-section">
+                <strong class="orange-text">Hexagonal Storm:</strong>
+                <div style="color: #9ca3af; margin-left: 8px; margin-top: 2px; font-size: 10px;">
+                    A massive hexagon-shaped jet stream at Saturn's north pole, ~30,000 km wide. Zoom in and look at the top of Saturn!
+                </div>
+            </div>
+
+            <div class="info-section">
+                <strong>Interaction Tips:</strong>
+                <div style="color: #9ca3af; margin-left: 8px; margin-top: 4px; font-size: 10px;">
+                    • <strong>Hover</strong> over moons to see their names<br>
+                    • <strong>Click</strong> a moon to pin its label<br>
+                    • <strong>Drag</strong> to rotate the camera<br>
+                    • <strong>Scroll</strong> to zoom in/out
+                </div>
+            </div>
+
+            <div class="info-section">
+                <strong class="blue-text">Shepherd Moons:</strong>
+                <div style="color: #9ca3af; margin-left: 8px; margin-top: 2px;">
+                    Pan, Daphnis, Atlas, Prometheus, Pandora, and more tiny moonlets that sculpt ring gaps
+                </div>
+                <div class="orbit-legend">
+                    <div class="orbit-line blue"></div>
+                    <span style="font-size: 9px; color: #60a5fa;">Blue orbits</span>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <strong>Major Moons:</strong>
+                <div style="color: #9ca3af; margin-left: 8px; margin-top: 2px;">
+                    Mimas, Enceladus, Tethys, Dione, Rhea, Titan (with atmosphere!), Hyperion, Iapetus
+                </div>
+                <div class="orbit-legend">
+                    <div class="orbit-line gray"></div>
+                    <span style="font-size: 9px; color: #9ca3af;">Gray orbits</span>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <strong class="pink-text">Irregular Moons:</strong>
+                <div style="color: #9ca3af; margin-left: 8px; margin-top: 2px;">
+                    Far, tilted orbits. Many orbit backwards (retrograde)!
+                </div>
+                <div class="orbit-legend">
+                    <div class="orbit-line pink"></div>
+                    <span style="font-size: 9px; color: #f472b6;">Pink orbits</span>
+                </div>
+            </div>
+        </div>
+        <div class="resize-handle"></div>
+    </div>
+
+    <div id="moons-panel" class="ui-panel" style="left: 24px; top: 120px; width: 300px; height: 550px; display: none;">
+        <div class="panel-header">
+            <span class="panel-title">Moon Navigator</span>
+            <div class="panel-controls">
+                <button onclick="toggleCollapse('moons')">−</button>
+                <button onclick="togglePanel('moons')">×</button>
+            </div>
+        </div>
+        <div class="panel-content" id="moons-content">
+            <button class="btn btn-primary" style="width: 100%; margin-bottom: 12px;" onclick="focusSaturn()">
+                🪐 Focus on Saturn
+            </button>
+            <div id="moon-list" style="max-height: 450px; overflow-y: auto;"></div>
+        </div>
+        <div class="resize-handle"></div>
+    </div>
+
+    <div id="labels-container"></div>
+
     <script>
-        // Check WebGL support
-        if (!window.WebGLRenderingContext) {
-            document.getElementById('loading-status').textContent = 'WebGL is not supported in your browser';
-            document.getElementById('loading-details').textContent = 'Please use a modern browser with WebGL support';
+        // Configuration
+        const config = {
+            timeSpeed: 1,
+            isPaused: false,
+            showRings: true,
+            showAtmosphere: true,
+            showHexagon: true,
+            showShepherd: true,
+            showMajor: true,
+            showMinor: true,
+            showIrregular: false,
+            showOrbits: true,
+            showLabels: true,
+            ringDensity: 50000,
+            simulationTime: 0,
+            selectedMoon: null
+        };
+
+        // Moon data - 40+ moons!
+        const moonsData = [
+            // SHEPHERD MOONS
+            { name: 'Pan', distance: 265, size: 0.8, speed: 0.036, color: 0xffffff, inclination: 0.0001, type: 'shepherd', desc: 'Encke Gap shepherd' },
+            { name: 'Daphnis', distance: 270, size: 0.6, speed: 0.035, color: 0xf8f8ff, inclination: 0.0001, type: 'shepherd', desc: 'Keeler Gap shepherd' },
+            { name: 'Atlas', distance: 282, size: 1, speed: 0.033, color: 0xf0f0f0, inclination: 0.0005, type: 'shepherd', desc: 'A-ring outer edge' },
+            { name: 'Prometheus', distance: 288, size: 1.5, speed: 0.031, color: 0xd8d8d8, inclination: 0.0008, type: 'shepherd', desc: 'F-ring inner shepherd' },
+            { name: 'Pandora', distance: 292, size: 1.4, speed: 0.030, color: 0xc0c0c0, inclination: 0.0007, type: 'shepherd', desc: 'F-ring outer shepherd' },
+            { name: 'Aegaeon', distance: 333, size: 0.4, speed: 0.025, color: 0xe8e8e8, inclination: 0.0001, type: 'shepherd', desc: 'G-ring moonlet' },
+            { name: 'Methone', distance: 345, size: 0.5, speed: 0.023, color: 0xf0f0f8, inclination: 0.0001, type: 'shepherd', desc: 'Alkyonides group' },
+            { name: 'Anthe', distance: 348, size: 0.4, speed: 0.023, color: 0xf0f8f0, inclination: 0.0001, type: 'shepherd', desc: 'Alkyonides group' },
+            { name: 'Pallene', distance: 352, size: 0.6, speed: 0.022, color: 0xf8f0f0, inclination: 0.0001, type: 'shepherd', desc: 'Alkyonides group' },
+            { name: 'S/2009 S1', distance: 234, size: 0.3, speed: 0.038, color: 0xfafaff, inclination: 0.0001, type: 'shepherd', desc: 'B-ring propeller' },
+            { name: 'S/2005 S1', distance: 277, size: 0.25, speed: 0.034, color: 0xf5f5ff, inclination: 0.0001, type: 'shepherd', desc: 'Cassini Division' },
+            { name: 'Bleriot', distance: 274, size: 0.2, speed: 0.034, color: 0xfff8f8, inclination: 0.0001, type: 'shepherd', desc: 'A-ring moonlet' },
+            { name: 'Tarqeq', distance: 276, size: 0.2, speed: 0.034, color: 0xf8fff8, inclination: 0.0001, type: 'shepherd', desc: 'Named propeller' },
+            { name: 'Earhart', distance: 278, size: 0.2, speed: 0.033, color: 0xfff8ff, inclination: 0.0001, type: 'shepherd', desc: 'Named propeller' },
+            { name: 'Santos-Dumont', distance: 280, size: 0.2, speed: 0.033, color: 0xf8f8f8, inclination: 0.0001, type: 'shepherd', desc: 'Named propeller' },
+            { name: 'S/2004 S6', distance: 340, size: 0.3, speed: 0.024, color: 0xf0f0f0, inclination: 0.0001, type: 'shepherd', desc: 'Between rings & Mimas' },
+            
+            // INNER SMALL MOONS
+            { name: 'Epimetheus', distance: 315, size: 2, speed: 0.027, color: 0xa8a8a8, inclination: 0.006, type: 'minor', desc: 'Co-orbital with Janus' },
+            { name: 'Janus', distance: 316, size: 2.5, speed: 0.027, color: 0xb8b8b8, inclination: 0.003, type: 'minor', desc: 'Co-orbital, walnut-shaped' },
+            
+            // MAJOR MOONS
+            { name: 'Mimas', distance: 365, size: 4, speed: 0.021, color: 0xcccccc, inclination: 0.027, type: 'major', desc: 'Death Star moon' },
+            { name: 'Enceladus', distance: 420, size: 5, speed: 0.017, color: 0xf0f0ff, inclination: 0.009, type: 'major', desc: 'Ice geysers, ocean' },
+            { name: 'Tethys', distance: 500, size: 6, speed: 0.014, color: 0xe8e8e8, inclination: 0.019, type: 'major', desc: 'Odysseus crater' },
+            { name: 'Telesto', distance: 500, size: 1.2, speed: 0.014, color: 0xd0d0e0, inclination: 0.019, type: 'minor', desc: 'Tethys L4 trojan' },
+            { name: 'Calypso', distance: 500, size: 1.2, speed: 0.014, color: 0xd0e0d0, inclination: 0.019, type: 'minor', desc: 'Tethys L5 trojan' },
+            { name: 'Dione', distance: 600, size: 6, speed: 0.012, color: 0xd0d0d0, inclination: 0.006, type: 'major', desc: 'Wispy terrain' },
+            { name: 'Helene', distance: 600, size: 1.8, speed: 0.012, color: 0xe0d0d0, inclination: 0.006, type: 'minor', desc: 'Dione L4 trojan' },
+            { name: 'Polydeuces', distance: 600, size: 0.5, speed: 0.012, color: 0xd0e0e0, inclination: 0.006, type: 'minor', desc: 'Dione L5 trojan' },
+            { name: 'Rhea', distance: 720, size: 8, speed: 0.010, color: 0xdddddd, inclination: 0.006, type: 'major', desc: 'Second-largest' },
+            { name: 'Titan', distance: 900, size: 14, speed: 0.007, color: 0xffa040, inclination: 0.006, type: 'major', desc: 'Thick atmosphere' },
+            { name: 'Hyperion', distance: 1000, size: 4, speed: 0.005, color: 0xc8b8a8, inclination: 0.01, type: 'major', desc: 'Chaotic rotation' },
+            { name: 'Iapetus', distance: 1200, size: 7, speed: 0.003, color: 0x888888, inclination: 0.132, type: 'major', desc: 'Two-toned' },
+            
+            // IRREGULAR OUTER MOONS
+            { name: 'Kiviuq', distance: 1400, size: 2.5, speed: 0.0015, color: 0x998877, inclination: 0.80, type: 'irregular', desc: 'Inuit group' },
+            { name: 'Ijiraq', distance: 1420, size: 2, speed: 0.0015, color: 0x887766, inclination: 0.81, type: 'irregular', desc: 'Inuit group' },
+            { name: 'Paaliaq', distance: 1550, size: 2.8, speed: 0.0012, color: 0x776655, inclination: 0.78, type: 'irregular', desc: 'Inuit group' },
+            { name: 'Phoebe', distance: 1650, size: 4.5, speed: -0.001, color: 0x554444, inclination: 3.05, type: 'irregular', desc: 'RETROGRADE!' },
+            { name: 'Skathi', distance: 1700, size: 1.5, speed: -0.0009, color: 0x665544, inclination: 2.62, type: 'irregular', desc: 'RETROGRADE' },
+            { name: 'Albiorix', distance: 1800, size: 3, speed: 0.0008, color: 0x9988aa, inclination: 0.61, type: 'irregular', desc: 'Gallic group' },
+            { name: 'Bebhionn', distance: 1950, size: 1.2, speed: 0.0007, color: 0x8877aa, inclination: 0.65, type: 'irregular', desc: 'Gallic group' },
+            { name: 'Erriapus', distance: 2000, size: 1.5, speed: 0.0006, color: 0x9988bb, inclination: 0.60, type: 'irregular', desc: 'Gallic group' },
+            { name: 'Siarnaq', distance: 2100, size: 3.5, speed: 0.0006, color: 0x887799, inclination: 0.79, type: 'irregular', desc: 'Inuit group' },
+            { name: 'Narvi', distance: 2250, size: 1.3, speed: -0.0005, color: 0x776677, inclination: 2.4, type: 'irregular', desc: 'RETROGRADE' }
+        ];
+
+        // Three.js setup
+        let scene, camera, renderer, saturn, rings, moons = [], orbits = [];
+        let atmosphereLayers = [];
+        let raycaster, mouse;
+        let hoveredMoon = null, pinnedMoon = null;
+        const saturnTilt = 0.466;
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000510);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100000);
+            camera.position.set(0, 800, 1200);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('container').appendChild(renderer.domElement);
+
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
+            sunLight.position.set(2000, 500, 1000);
+            scene.add(sunLight);
+
+            const backLight = new THREE.PointLight(0x4466ff, 0.3);
+            backLight.position.set(-1000, 200, -500);
+            scene.add(backLight);
+
+            // Saturn
+            const saturnGeometry = new THREE.SphereGeometry(120, 64, 64);
+            const saturnMaterial = new THREE.MeshPhongMaterial({
+                color: 0xe6d9b8,
+                shininess: 5,
+                emissive: 0x1a1510
+            });
+            saturn = new THREE.Mesh(saturnGeometry, saturnMaterial);
+            saturn.rotation.x = saturnTilt;
+            scene.add(saturn);
+
+            // Multi-layered atmosphere
+            createAtmosphere();
+
+            // Add hexagonal storm at north pole
+            createHexagonalStorm();
+
+            // Rings
+            rings = new THREE.Group();
+            scene.add(rings);
+            createRings();
+            rings.rotation.x = saturnTilt;
+
+            // Moons
+            createMoons();
+
+            // Stars
+            createStars();
+
+            // Camera controls
+            setupCameraControls();
+            setupMouseEvents();
+
+            // Event listeners
+            document.getElementById('speed-slider').addEventListener('input', (e) => {
+                config.timeSpeed = parseFloat(e.target.value);
+                document.getElementById('speed-value').textContent = config.timeSpeed.toFixed(1);
+            });
+
+            document.getElementById('particles-slider').addEventListener('input', (e) => {
+                config.ringDensity = parseInt(e.target.value);
+                document.getElementById('particles-value').textContent = config.ringDensity.toLocaleString();
+            });
+
+            ['show-rings', 'show-atmosphere', 'show-hexagon', 'show-shepherd', 'show-major', 'show-minor', 'show-irregular', 'show-orbits', 'show-labels'].forEach(id => {
+                document.getElementById(id).addEventListener('change', (e) => {
+                    const key = id.replace('show-', '').replace('-', '');
+                    const mapping = {
+                        'rings': 'showRings',
+                        'atmosphere': 'showAtmosphere',
+                        'hexagon': 'showHexagon',
+                        'shepherd': 'showShepherd',
+                        'major': 'showMajor',
+                        'minor': 'showMinor',
+                        'irregular': 'showIrregular',
+                        'orbits': 'showOrbits',
+                        'labels': 'showLabels'
+                    };
+                    config[mapping[key]] = e.target.checked;
+                });
+            });
+
+            populateMoonList();
+            animate();
         }
-        
-        // Set initial theme based on system preference
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.documentElement.setAttribute('data-theme', 'dark');
+
+        function createAtmosphere() {
+            // Multiple atmospheric layers for depth
+            const layers = [
+                { radius: 128, color: 0xf4e4c8, opacity: 0.15 },
+                { radius: 135, color: 0xffeedd, opacity: 0.10 },
+                { radius: 145, color: 0xfff5e6, opacity: 0.06 },
+                { radius: 160, color: 0xfff8f0, opacity: 0.03 }
+            ];
+
+            layers.forEach(layer => {
+                const geometry = new THREE.SphereGeometry(layer.radius, 32, 32);
+                const material = new THREE.MeshBasicMaterial({
+                    color: layer.color,
+                    transparent: true,
+                    opacity: layer.opacity,
+                    side: THREE.BackSide,
+                    blending: THREE.AdditiveBlending
+                });
+                const sphere = new THREE.Mesh(geometry, material);
+                saturn.add(sphere);
+                atmosphereLayers.push(sphere);
+            });
+
+            // Add atmospheric bands/clouds
+            const bandGeometry = new THREE.SphereGeometry(122, 64, 64);
+            const bandMaterial = new THREE.MeshPhongMaterial({
+                color: 0xd4c4a8,
+                transparent: true,
+                opacity: 0.15,
+                shininess: 5
+            });
+            const bands = new THREE.Mesh(bandGeometry, bandMaterial);
+            saturn.add(bands);
+            atmosphereLayers.push(bands);
         }
-        
-        // Prevent context menu on canvas
-        document.getElementById('canvas').addEventListener('contextmenu', (e) => {
-            e.preventDefault();
+
+        function createHexagonalStorm() {
+            // Create the famous hexagonal storm at Saturn's north pole
+            const hexagonGroup = new THREE.Group();
+            
+            // Create hexagon shape
+            const hexRadius = 30;
+            const hexPoints = [];
+            for (let i = 0; i < 6; i++) {
+                const angle = (i / 6) * Math.PI * 2;
+                hexPoints.push(new THREE.Vector2(
+                    Math.cos(angle) * hexRadius,
+                    Math.sin(angle) * hexRadius
+                ));
+            }
+            hexPoints.push(hexPoints[0].clone()); // Close the shape
+
+            // Hexagon outline (bright)
+            const hexShape = new THREE.Shape(hexPoints);
+            const hexGeometry = new THREE.ShapeGeometry(hexShape);
+            const hexMaterial = new THREE.MeshBasicMaterial({
+                color: 0xff6644,
+                transparent: true,
+                opacity: 0.4,
+                side: THREE.DoubleSide
+            });
+            const hexMesh = new THREE.Mesh(hexGeometry, hexMaterial);
+            hexMesh.rotation.x = Math.PI / 2;
+            hexMesh.position.y = 121;
+            hexagonGroup.add(hexMesh);
+
+            // Add glowing hexagon outline
+            const hexLine = new THREE.BufferGeometry().setFromPoints(
+                hexPoints.map(p => new THREE.Vector3(p.x, 121, p.y))
+            );
+            const hexLineMaterial = new THREE.LineBasicMaterial({
+                color: 0xffaa66,
+                transparent: true,
+                opacity: 0.8,
+                linewidth: 2
+            });
+            const hexLineLoop = new THREE.Line(hexLine, hexLineMaterial);
+            hexagonGroup.add(hexLineLoop);
+
+            // Add swirling storm center
+            const stormGeometry = new THREE.SphereGeometry(15, 32, 32);
+            const stormMaterial = new THREE.MeshBasicMaterial({
+                color: 0xff8844,
+                transparent: true,
+                opacity: 0.3,
+                blending: THREE.AdditiveBlending
+            });
+            const stormCenter = new THREE.Mesh(stormGeometry, stormMaterial);
+            stormCenter.position.y = 121;
+            stormCenter.scale.set(1, 0.3, 1); // Flatten it
+            hexagonGroup.add(stormCenter);
+
+            // Add spiral cloud bands inside hexagon
+            for (let ring = 0; ring < 3; ring++) {
+                const ringRadius = 10 + ring * 8;
+                const points = [];
+                for (let i = 0; i <= 64; i++) {
+                    const angle = (i / 64) * Math.PI * 2 * 2; // 2 spirals
+                    const r = ringRadius * (1 - (i / 64) * 0.3); // Spiral inward
+                    points.push(new THREE.Vector3(
+                        Math.cos(angle) * r,
+                        121 + Math.sin(i * 0.2) * 2,
+                        Math.sin(angle) * r
+                    ));
+                }
+                const spiralGeometry = new THREE.BufferGeometry().setFromPoints(points);
+                const spiralMaterial = new THREE.LineBasicMaterial({
+                    color: 0xffcc88,
+                    transparent: true,
+                    opacity: 0.4
+                });
+                const spiral = new THREE.Line(spiralGeometry, spiralMaterial);
+                hexagonGroup.add(spiral);
+                hexagonGroup.userData.spirals = hexagonGroup.userData.spirals || [];
+                hexagonGroup.userData.spirals.push(spiral);
+            }
+
+            // Add particle system for storm activity
+            const particleCount = 200;
+            const particleGeometry = new THREE.BufferGeometry();
+            const particlePositions = [];
+            const particleSizes = [];
+            
+            for (let i = 0; i < particleCount; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = Math.random() * hexRadius * 0.8;
+                particlePositions.push(
+                    Math.cos(angle) * radius,
+                    121 + (Math.random() - 0.5) * 3,
+                    Math.sin(angle) * radius
+                );
+                particleSizes.push(Math.random() * 2 + 0.5);
+            }
+            
+            particleGeometry.setAttribute('position', new THREE.Float32BufferAttribute(particlePositions, 3));
+            particleGeometry.setAttribute('size', new THREE.Float32BufferAttribute(particleSizes, 1));
+            
+            const particleMaterial = new THREE.PointsMaterial({
+                color: 0xffaa44,
+                size: 1.5,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending,
+                sizeAttenuation: true
+            });
+            
+            const particles = new THREE.Points(particleGeometry, particleMaterial);
+            hexagonGroup.add(particles);
+            hexagonGroup.userData.particles = particles;
+
+            saturn.add(hexagonGroup);
+            hexagonGroup.userData.isHexagon = true;
+            atmosphereLayers.push(hexagonGroup);
+        }
+
+        function createRings() {
+            const createRingParticles = (innerRadius, outerRadius, count, color, opacity) => {
+                const geometry = new THREE.BufferGeometry();
+                const positions = [];
+                const colors = [];
+                const sizes = [];
+                const colorObj = new THREE.Color(color);
+
+                for (let i = 0; i < count; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = innerRadius + Math.random() * (outerRadius - innerRadius);
+                    const height = (Math.random() - 0.5) * 2;
+                    
+                    positions.push(Math.cos(angle) * radius, height, Math.sin(angle) * radius);
+                    
+                    const colorVariation = 0.9 + Math.random() * 0.1;
+                    colors.push(colorObj.r * colorVariation, colorObj.g * colorVariation, colorObj.b * colorVariation);
+                    sizes.push(0.5 + Math.random() * 1.5);
+                }
+
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+                geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+
+                const material = new THREE.PointsMaterial({
+                    size: 2,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: opacity,
+                    sizeAttenuation: true,
+                    blending: THREE.AdditiveBlending
+                });
+
+                return new THREE.Points(geometry, material);
+            };
+
+            rings.add(createRingParticles(140, 180, Math.floor(config.ringDensity * 0.15), 0x9a8a78, 0.25));
+            rings.add(createRingParticles(180, 235, Math.floor(config.ringDensity * 0.45), 0xf0e8d8, 0.8));
+            rings.add(createRingParticles(235, 240, Math.floor(config.ringDensity * 0.03), 0x5a4f45, 0.15));
+            rings.add(createRingParticles(240, 280, Math.floor(config.ringDensity * 0.37), 0xe8dcc8, 0.65));
+        }
+
+        function createMoons() {
+            moonsData.forEach(data => {
+                const moonOrbitGroup = new THREE.Group();
+                moonOrbitGroup.rotation.x = saturnTilt + data.inclination;
+                scene.add(moonOrbitGroup);
+
+                const moonGeometry = new THREE.SphereGeometry(data.size, 16, 16);
+                const moonMaterial = new THREE.MeshPhongMaterial({
+                    color: data.color,
+                    shininess: 5
+                });
+                const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+                moon.userData = { ...data, angle: Math.random() * Math.PI * 2, orbitGroup: moonOrbitGroup };
+                moonOrbitGroup.add(moon);
+                moons.push(moon);
+
+                // Add atmosphere to Titan
+                if (data.name === 'Titan') {
+                    const titanAtmo = new THREE.SphereGeometry(data.size * 1.3, 16, 16);
+                    const titanAtmoMat = new THREE.MeshBasicMaterial({
+                        color: 0xffaa44,
+                        transparent: true,
+                        opacity: 0.2,
+                        side: THREE.BackSide
+                    });
+                    const atmo = new THREE.Mesh(titanAtmo, titanAtmoMat);
+                    moon.add(atmo);
+                }
+
+                // Orbit line
+                const orbitPoints = [];
+                for (let i = 0; i <= 128; i++) {
+                    const angle = (i / 128) * Math.PI * 2;
+                    orbitPoints.push(new THREE.Vector3(
+                        Math.cos(angle) * data.distance,
+                        0,
+                        Math.sin(angle) * data.distance
+                    ));
+                }
+                
+                let orbitColor, orbitOpacity;
+                if (data.type === 'major') {
+                    orbitColor = 0x666666;
+                    orbitOpacity = 0.5;
+                } else if (data.type === 'shepherd') {
+                    orbitColor = 0x4488ff;
+                    orbitOpacity = 0.4;
+                } else if (data.type === 'irregular') {
+                    orbitColor = 0xff4488;
+                    orbitOpacity = 0.3;
+                } else {
+                    orbitColor = 0x444444;
+                    orbitOpacity = 0.3;
+                }
+
+                const orbitGeometry = new THREE.BufferGeometry().setFromPoints(orbitPoints);
+                const orbitMaterial = new THREE.LineBasicMaterial({
+                    color: orbitColor,
+                    transparent: true,
+                    opacity: orbitOpacity
+                });
+                const orbit = new THREE.Line(orbitGeometry, orbitMaterial);
+                orbit.userData = { moonName: data.name, type: data.type };
+                moonOrbitGroup.add(orbit);
+                orbits.push(orbit);
+            });
+        }
+
+        function createStars() {
+            const starsGeometry = new THREE.BufferGeometry();
+            const starsPositions = [];
+            for (let i = 0; i < 8000; i++) {
+                starsPositions.push(
+                    (Math.random() - 0.5) * 15000,
+                    (Math.random() - 0.5) * 15000,
+                    (Math.random() - 0.5) * 15000
+                );
+            }
+            starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsPositions, 3));
+            const starsMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 2,
+                transparent: true,
+                opacity: 0.8
+            });
+            const stars = new THREE.Points(starsGeometry, starsMaterial);
+            scene.add(stars);
+        }
+
+        // Mouse interaction for labels
+        function setupMouseEvents() {
+            renderer.domElement.addEventListener('mousemove', onMouseMove);
+            renderer.domElement.addEventListener('click', onMouseClick);
+        }
+
+        function onMouseMove(event) {
+            if (!config.showLabels) return;
+            
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(moons);
+
+            if (intersects.length > 0) {
+                const moon = intersects[0].object;
+                if (moon !== pinnedMoon) {
+                    hoveredMoon = moon;
+                    showLabel(moon, false);
+                }
+            } else {
+                if (hoveredMoon && hoveredMoon !== pinnedMoon) {
+                    hideLabel(hoveredMoon);
+                    hoveredMoon = null;
+                }
+            }
+        }
+
+        function onMouseClick(event) {
+            if (!config.showLabels) return;
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(moons);
+
+            if (intersects.length > 0) {
+                const moon = intersects[0].object;
+                if (pinnedMoon === moon) {
+                    hideLabel(moon);
+                    pinnedMoon = null;
+                } else {
+                    if (pinnedMoon) {
+                        hideLabel(pinnedMoon);
+                    }
+                    pinnedMoon = moon;
+                    showLabel(moon, true);
+                }
+            }
+        }
+
+        function showLabel(moon, pinned) {
+            const labelId = 'label-' + moon.userData.name.replace(/\s/g, '-');
+            let label = document.getElementById(labelId);
+
+            if (!label) {
+                label = document.createElement('div');
+                label.id = labelId;
+                label.className = 'moon-label';
+                label.innerHTML = `
+                    ${pinned ? '<button class="close-label" onclick="closePinnedLabel(\'' + moon.userData.name + '\')">×</button>' : ''}
+                    <div class="moon-label-name">${moon.userData.name}</div>
+                    <div class="moon-label-info">${moon.userData.desc || moon.userData.type} • ${moon.userData.distance}km</div>
+                `;
+                document.getElementById('labels-container').appendChild(label);
+            }
+
+            if (pinned) {
+                label.classList.add('pinned');
+            }
+
+            updateLabelPosition(moon, label);
+        }
+
+        function hideLabel(moon) {
+            const labelId = 'label-' + moon.userData.name.replace(/\s/g, '-');
+            const label = document.getElementById(labelId);
+            if (label && !label.classList.contains('pinned')) {
+                label.remove();
+            }
+        }
+
+        function updateLabelPosition(moon, label) {
+            const worldPos = new THREE.Vector3();
+            moon.getWorldPosition(worldPos);
+            worldPos.project(camera);
+
+            const x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
+            const y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
+
+            label.style.left = x + 'px';
+            label.style.top = (y - 40) + 'px';
+        }
+
+        function closePinnedLabel(moonName) {
+            const labelId = 'label-' + moonName.replace(/\s/g, '-');
+            const label = document.getElementById(labelId);
+            if (label) {
+                label.remove();
+            }
+            pinnedMoon = null;
+        }
+
+        // Camera controls
+        let cameraState = { radius: 1500, theta: Math.PI / 4, phi: Math.PI / 3, target: new THREE.Vector3(0, 0, 0) };
+        let mouseState = { isDragging: false, lastX: 0, lastY: 0 };
+
+        function setupCameraControls() {
+            renderer.domElement.addEventListener('mousedown', (e) => {
+                mouseState.isDragging = true;
+                mouseState.lastX = e.clientX;
+                mouseState.lastY = e.clientY;
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (mouseState.isDragging) {
+                    const deltaX = e.clientX - mouseState.lastX;
+                    const deltaY = e.clientY - mouseState.lastY;
+                    
+                    cameraState.theta += deltaX * 0.005;
+                    cameraState.phi = Math.max(0.1, Math.min(Math.PI - 0.1, cameraState.phi - deltaY * 0.005));
+                    
+                    updateCamera();
+                    
+                    mouseState.lastX = e.clientX;
+                    mouseState.lastY = e.clientY;
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                mouseState.isDragging = false;
+            });
+
+            renderer.domElement.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                cameraState.radius = Math.max(200, Math.min(8000, cameraState.radius + e.deltaY * 0.1));
+                updateCamera();
+            }, { passive: false });
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        function updateCamera() {
+            const x = cameraState.target.x + cameraState.radius * Math.sin(cameraState.phi) * Math.cos(cameraState.theta);
+            const y = cameraState.target.y + cameraState.radius * Math.cos(cameraState.phi);
+            const z = cameraState.target.z + cameraState.radius * Math.sin(cameraState.phi) * Math.sin(cameraState.theta);
+            
+            camera.position.set(x, y, z);
+            camera.lookAt(cameraState.target);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (!config.isPaused) {
+                config.simulationTime += 0.001 * config.timeSpeed;
+
+                saturn.rotation.y -= 0.002 * config.timeSpeed;
+                rings.rotation.y -= 0.0003 * config.timeSpeed;
+
+                // Animate hexagonal storm
+                atmosphereLayers.forEach(layer => {
+                    if (layer.userData && layer.userData.isHexagon) {
+                        // Rotate the hexagon slowly
+                        layer.rotation.y += 0.0005 * config.timeSpeed;
+                        
+                        // Pulse the hexagon slightly
+                        const pulse = 1 + Math.sin(config.simulationTime * 3) * 0.05;
+                        layer.scale.set(pulse, 1, pulse);
+                        
+                        // Animate particles in swirling motion
+                        if (layer.userData.particles) {
+                            const positions = layer.userData.particles.geometry.attributes.position.array;
+                            for (let i = 0; i < positions.length; i += 3) {
+                                const x = positions[i];
+                                const z = positions[i + 2];
+                                const angle = Math.atan2(z, x);
+                                const radius = Math.sqrt(x * x + z * z);
+                                
+                                const newAngle = angle + 0.001 * config.timeSpeed;
+                                positions[i] = Math.cos(newAngle) * radius;
+                                positions[i + 2] = Math.sin(newAngle) * radius;
+                                
+                                // Add slight vertical oscillation
+                                positions[i + 1] = 121 + Math.sin(config.simulationTime * 2 + i) * 2;
+                            }
+                            layer.userData.particles.geometry.attributes.position.needsUpdate = true;
+                        }
+                        
+                        // Animate spirals
+                        if (layer.userData.spirals) {
+                            layer.userData.spirals.forEach((spiral, idx) => {
+                                spiral.rotation.y += (0.0008 + idx * 0.0002) * config.timeSpeed;
+                            });
+                        }
+                    }
+                });
+
+                moons.forEach(moon => {
+                    let shouldShow = false;
+                    if (moon.userData.type === 'major') shouldShow = config.showMajor;
+                    else if (moon.userData.type === 'minor') shouldShow = config.showMinor;
+                    else if (moon.userData.type === 'shepherd') shouldShow = config.showShepherd;
+                    else if (moon.userData.type === 'irregular') shouldShow = config.showIrregular;
+                    
+                    if (shouldShow) {
+                        moon.userData.angle += moon.userData.speed * config.timeSpeed * 0.01;
+                        moon.position.x = Math.cos(moon.userData.angle) * moon.userData.distance;
+                        moon.position.z = Math.sin(moon.userData.angle) * moon.userData.distance;
+                        moon.position.y = 0;
+                        moon.visible = true;
+                    } else {
+                        moon.visible = false;
+                    }
+                });
+
+                if (config.selectedMoon) {
+                    const moon = moons.find(m => m.userData.name === config.selectedMoon);
+                    if (moon) {
+                        const worldPos = new THREE.Vector3();
+                        moon.getWorldPosition(worldPos);
+                        cameraState.target.lerp(worldPos, 0.05);
+                        updateCamera();
+                    }
+                }
+
+                const days = Math.floor(Math.abs(config.simulationTime) * 10);
+                const hours = Math.floor((Math.abs(config.simulationTime) * 10 - days) * 24);
+                document.getElementById('stats').textContent = 
+                    `40+ moons • Hexagonal storm • ${config.ringDensity.toLocaleString()} ring particles • Time: ${config.simulationTime < 0 ? '-' : ''}${days}d ${hours}h`;
+            }
+
+            // Update label positions for pinned labels
+            document.querySelectorAll('.moon-label.pinned').forEach(label => {
+                const moonName = label.id.replace('label-', '').replace(/-/g, ' ');
+                const moon = moons.find(m => m.userData.name === moonName);
+                if (moon) {
+                    updateLabelPosition(moon, label);
+                }
+            });
+
+            rings.visible = config.showRings;
+            atmosphereLayers.forEach(layer => {
+                if (layer.userData && layer.userData.isHexagon) {
+                    layer.visible = config.showAtmosphere && config.showHexagon;
+                } else {
+                    layer.visible = config.showAtmosphere;
+                }
+            });
+            
+            orbits.forEach(orbit => {
+                let shouldShow = false;
+                if (orbit.userData.type === 'major') shouldShow = config.showMajor;
+                else if (orbit.userData.type === 'minor') shouldShow = config.showMinor;
+                else if (orbit.userData.type === 'shepherd') shouldShow = config.showShepherd;
+                else if (orbit.userData.type === 'irregular') shouldShow = config.showIrregular;
+                orbit.visible = config.showOrbits && shouldShow;
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        // UI Functions
+        function togglePanel(panel) {
+            const el = document.getElementById(panel + '-panel');
+            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function toggleCollapse(panel) {
+            const content = document.getElementById(panel + '-content');
+            content.style.display = content.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function togglePause() {
+            config.isPaused = !config.isPaused;
+            document.getElementById('pause-btn').textContent = config.isPaused ? '▶' : '⏸';
+        }
+
+        function adjustSpeed(delta) {
+            config.timeSpeed = Math.max(-5, Math.min(10, config.timeSpeed + delta));
+            document.getElementById('speed-slider').value = config.timeSpeed;
+            document.getElementById('speed-value').textContent = config.timeSpeed.toFixed(1);
+        }
+
+        function resetTime() {
+            config.simulationTime = 0;
+            config.timeSpeed = 1;
+            config.isPaused = false;
+            document.getElementById('speed-slider').value = 1;
+            document.getElementById('speed-value').textContent = '1.0';
+            document.getElementById('pause-btn').textContent = '⏸';
+        }
+
+        function focusSaturn() {
+            config.selectedMoon = null;
+            cameraState.target.set(0, 0, 0);
+            document.querySelectorAll('.moon-btn').forEach(btn => btn.classList.remove('selected'));
+        }
+
+        function selectMoon(moonName) {
+            config.selectedMoon = moonName;
+            document.querySelectorAll('.moon-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.moon === moonName);
+            });
+        }
+
+        function populateMoonList() {
+            const moonList = document.getElementById('moon-list');
+            const categories = {
+                shepherd: { title: '🛡️ Shepherd Moons', moons: [] },
+                major: { title: '⭐ Major Moons', moons: [] },
+                minor: { title: '○ Minor Moons', moons: [] },
+                irregular: { title: '◈ Irregular Moons', moons: [] }
+            };
+
+            moonsData.forEach(moon => {
+                categories[moon.type].moons.push(moon);
+            });
+
+            Object.keys(categories).forEach(type => {
+                const category = categories[type];
+                if (category.moons.length === 0) return;
+
+                const section = document.createElement('div');
+                section.style.marginBottom = '16px';
+                
+                const header = document.createElement('div');
+                header.className = 'section-header';
+                if (type === 'shepherd') header.classList.add('blue-text');
+                else if (type === 'irregular') header.classList.add('pink-text');
+                header.textContent = category.title;
+                section.appendChild(header);
+
+                category.moons.forEach(moon => {
+                    const btn = document.createElement('button');
+                    btn.className = 'moon-btn ' + type;
+                    btn.dataset.moon = moon.name;
+                    btn.onclick = () => selectMoon(moon.name);
+                    
+                    const info = document.createElement('div');
+                    info.className = 'moon-info';
+                    info.innerHTML = `
+                        <span style="font-weight: 500;">${moon.name}</span>
+                        <span class="moon-distance">${moon.distance}k</span>
+                    `;
+                    btn.appendChild(info);
+                    
+                    if (moon.desc) {
+                        const desc = document.createElement('div');
+                        desc.className = 'moon-desc';
+                        desc.textContent = moon.desc;
+                        btn.appendChild(desc);
+                    }
+                    
+                    section.appendChild(btn);
+                });
+
+                moonList.appendChild(section);
+            });
+        }
+
+        // Make panels draggable and resizable
+        document.querySelectorAll('.ui-panel').forEach(panel => {
+            const header = panel.querySelector('.panel-header');
+            const resizeHandle = panel.querySelector('.resize-handle');
+            let isDragging = false, isResizing = false;
+            let startX, startY, startLeft, startTop, startWidth, startHeight;
+
+            header.addEventListener('mousedown', (e) => {
+                if (e.target.closest('.panel-controls')) return;
+                isDragging = true;
+                startX = e.clientX - panel.offsetLeft;
+                startY = e.clientY - panel.offsetTop;
+                panel.style.cursor = 'grabbing';
+            });
+
+            if (resizeHandle) {
+                resizeHandle.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    isResizing = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    startWidth = panel.offsetWidth;
+                    startHeight = panel.offsetHeight;
+                });
+            }
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    panel.style.left = (e.clientX - startX) + 'px';
+                    panel.style.top = (e.clientY - startY) + 'px';
+                }
+                if (isResizing) {
+                    panel.style.width = Math.max(250, startWidth + e.clientX - startX) + 'px';
+                    panel.style.height = Math.max(200, startHeight + e.clientY - startY) + 'px';
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                isResizing = false;
+                panel.style.cursor = 'default';
+            });
         });
+
+        init();
     </script>
 </body>
 </html>
